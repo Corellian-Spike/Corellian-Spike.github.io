@@ -41,6 +41,7 @@ Triangle | Circle | Square | Sylop
 
 ### The Spike Dice
 Corellian Spike uses 2 identical 6-sided dice, usually with the following markings:
+
 ![Spike Dice template](https://github.com/Corellian-Spike/Corellian-Spike.github.io/blob/master/Sabacc/dice/spike%20dice%20template.png?raw=true "Spike Dice template")
 
 The markings (like the card Staves) are primarily aesthetic, as the only time they effect the game is when doubles are rolled (i.e. when both dice land on the same symbol).
