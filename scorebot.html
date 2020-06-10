@@ -17,12 +17,28 @@
       <h1>
         ScoreBot
       </h1>
-      <p>
-      Evaluation:
-      <span id="name-line"></span><br>
-      Rank:
-      <span id="rank-line"></span>
-      </p>
+      <table>
+        <tr>
+          <td class="min">
+            <em class="androcleselight-text">
+              Evaluation:
+            </em> 
+          </td>
+          <td id="name-line" class="max">
+            ---
+          </td>
+        </tr>
+        <tr>
+          <td class="min">
+            <em class="androcleselight-text">
+              Score:
+            </em> 
+          </td>
+          <td id="rank-line" class="max">
+            0
+          </td>
+        </tr>
+      </table>
       <ul>
         <li>
           <img src="assets/images/cards-small/back.png" class="card-reg optional" id="hand-0">
@@ -38,6 +54,7 @@
       <input type="number" name="control-3" id="control-3" min="-10" max="10" onchange="onControlChange('control-3', 'hand-3')">
       <input type="number" name="control-4" id="control-4" min="-10" max="10" onchange="onControlChange('control-4', 'hand-4')">
       <input type="submit" value="Calculate Score" id="calculate-button" onclick="onControlSubmit()">
+      <input type="submit" value="X" id="clear-button" onclick="onControlClear()">
     </div>
     <script src="src/helpers.js"></script>
     <script src="src/main-narrow.js"></script>

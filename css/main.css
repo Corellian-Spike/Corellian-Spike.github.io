@@ -250,7 +250,7 @@ input {
   height: 3rem;
   width: 5rem;
   min-width: min-content;
-  padding: .5rem;
+  margin: .5rem;
   text-align: center;
 }
 
@@ -298,4 +298,17 @@ span, p {
 
 span {
   white-space: nowrap;
+}
+
+table {
+  width: 100%;
+  max-width: 30rem;
+}
+
+td.min {
+  width: min-content;
+}
+td.max {
+  width: max-content;
+  text-align: right;
 }

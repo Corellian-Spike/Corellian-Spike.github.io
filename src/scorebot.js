@@ -25,13 +25,27 @@ const onControlSubmit = () => {
   displayScore(score(controlsArray));
 }
 
+const onControlClear = () => {
+  document.getElementById('control-0').value = null;
+  document.getElementById('control-1').value = null;
+  document.getElementById('control-2').value = null;
+  document.getElementById('control-3').value = null;
+  document.getElementById('control-4').value = null;
+
+  updateImage('hand-0', 'back', 'card-reg optional');
+  updateImage('hand-1', 'back', 'card-reg optional');
+  updateImage('hand-2', 'back', 'card-reg optional');
+  updateImage('hand-3', 'back', 'card-reg optional');
+  updateImage('hand-4', 'back', 'card-reg optional');
+}
+
 const numberWithCommas = (number) => {
-  return number.toString().replace(/\B(?=(\d{2})+(?!\d))/g, "-");
+  return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " , ");
 }
 
 displayScore = (score) => {
   document.getElementById('name-line').innerHTML = score.name;
-  document.getElementById('rank-line').innerHTML = numberWithCommas(score.rank);
+  document.getElementById('rank-line').innerHTML = numberWithCommas(score.rankNewInt);
 }
 
 const updateImage = (imageId, newImageName, className) => {
@@ -59,6 +73,8 @@ const score = (hand) => {
     name: undefined,
     rank: '00000000000000000000',
     rankInt: 0,
+    rankNew: '0',
+    rankNewInt: 0,
   };
 
   if (hand.length < 2) {
@@ -152,9 +168,9 @@ const score = (hand) => {
       score.name = `Dual Pair Sabacc (${frequencies.indexOf(2)}s & ${frequencies.indexOf(2, frequencies.indexOf(2) + 1)}s)`;
       criteria.sabaccBonus = 4;
       criteria.pairBonus = frequencies.indexOf(2);
-      criteria.secondPairBonus = frequencies.indexOf(2, frequencies.indexOf(2) + 1);
+      criteria.secondPairBonus = frequencies.indexOf(2, frequencies.indexOf(2) + 1) ? frequencies.indexOf(2, frequencies.indexOf(2) + 1) : frequencies.indexOf(2);
     } else if (frequencies.indexOf(2) >= 0) {
-      score.name = `Single Pair Sabacc (${frequencies.indexOf(2)}s)`;
+      score.name = `Lone Pair Sabacc (${frequencies.indexOf(2)}s)`;
       criteria.sabaccBonus = 3;
       criteria.pairBonus = frequencies.indexOf(2);
     } else {
@@ -179,8 +195,23 @@ const score = (hand) => {
     twoDigits(criteria.numberOfCards) +
     twoDigits(criteria.positiveSum) +
     twoDigits(criteria.highestPositiveCard);
+  
+  score.rankNew = 
+    criteria.isSabacc ? 
+    criteria.isSabacc +
+    twoDigits(criteria.sabaccBonus) +
+    twoDigits(criteria.pairBonus) +
+    twoDigits(criteria.secondPairBonus) +
+    twoDigits(criteria.runBonus) +
+    twoDigits(criteria.positiveSum) :
+    criteria.nulhrekBonus +
+    twoDigits(criteria.isPositive) +
+    twoDigits(criteria.numberOfCards) +
+    twoDigits(criteria.positiveSum) +
+    twoDigits(criteria.highestPositiveCard);
 
   score.rankInt = parseInt(score.rank);
+  score.rankNewInt = parseInt(score.rankNew);
 
   return score;
 };
