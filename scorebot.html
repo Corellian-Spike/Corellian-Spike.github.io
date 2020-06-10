@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="assets/fonts/Androcles/Androcles.css">
+    <link rel="stylesheet" href="css/main.css">
+
+    <title>Corellian Spike - ScoreBot</title>
+  </head>
+  <body>
+    <div class="centered-body">
+      <div id="link-header"></div>
+      <div id="header-image"></div>
+      <h1>
+        ScoreBot
+      </h1>
+      <p>
+      Evaluation:
+      <span id="name-line"></span><br>
+      Rank:
+      <span id="rank-line"></span>
+      </p>
+      <ul>
+        <li>
+          <img src="assets/images/cards-small/back.png" class="card-reg optional" id="hand-0">
+          <img src="assets/images/cards-small/back.png" class="card-reg optional" id="hand-1">
+          <img src="assets/images/cards-small/back.png" class="card-reg optional" id="hand-2">
+          <img src="assets/images/cards-small/back.png" class="card-reg optional" id="hand-3">
+          <img src="assets/images/cards-small/back.png" class="card-reg optional" id="hand-4">
+        </li>
+      </ul>
+      <input type="number" name="control-0" id="control-0" min="-10" max="10" onchange="onControlChange('control-0', 'hand-0')">
+      <input type="number" name="control-1" id="control-1" min="-10" max="10" onchange="onControlChange('control-1', 'hand-1')">
+      <input type="number" name="control-2" id="control-2" min="-10" max="10" onchange="onControlChange('control-2', 'hand-2')">
+      <input type="number" name="control-3" id="control-3" min="-10" max="10" onchange="onControlChange('control-3', 'hand-3')">
+      <input type="number" name="control-4" id="control-4" min="-10" max="10" onchange="onControlChange('control-4', 'hand-4')">
+      <input type="submit" value="Calculate Score" id="calculate-button" onclick="onControlSubmit()">
+    </div>
+    <script src="src/helpers.js"></script>
+    <script src="src/main-narrow.js"></script>
+    <script src="src/scorebot.js"></script>
+  </body>
+</html>
