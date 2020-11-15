@@ -21,8 +21,8 @@ const onControlChange = (controlId, imageId) => {
 const onControlSubmit = () => {
   const controlsArray = controlsToArray();
   console.log(controlsArray);
-  console.log(score(controlsArray));
-  displayScore(score(controlsArray));
+  console.log(scoreHand(controlsArray));
+  displayScore(scoreHand(controlsArray));
 }
 
 const onControlClear = () => {
@@ -39,13 +39,9 @@ const onControlClear = () => {
   updateImage('hand-4', 'back', 'card-reg optional');
 }
 
-const numberWithCommas = (number) => {
-  return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " , ");
-}
-
 displayScore = (score) => {
   document.getElementById('name-line').innerHTML = score.name;
-  document.getElementById('rank-line').innerHTML = numberWithCommas(score.rankNewInt);
+  document.getElementById('rank-line').innerHTML = score.rank;
 }
 
 const updateImage = (imageId, newImageName, className) => {
@@ -68,150 +64,374 @@ const controlsToArray = () => {
   return controlsArray;
 };
 
-const score = (hand) => {
+const scoreHand = (cardValues) => {
   const score = {
-    name: undefined,
-    rank: '00000000000000000000',
-    rankInt: 0,
-    rankNew: '0',
-    rankNewInt: 0,
+    rank: undefined,
+    name: undefined
   };
-
-  if (hand.length < 2) {
-    score.name = 'Not Enough Cards';
-    return score;
-  }
-
-  if (hand.length > 5) {
-    score.name = 'Too Many Cards';
-    return score;
-  }
-
-  // const hand = hand.map(card => card.value);
-  hand.sort((a, b) => (a-b));
-  const sum = hand.reduce((currentSum, value) => currentSum + value, 0);
 
   const criteria = {
-    isSabacc: sum === 0 ? 1 : 0,
-    sabaccBonus: 0,
-    pairBonus: 0,
-    secondPairBonus: 0,
-    runBonus: 0,
-    nulhrekBonus: 48 - Math.abs(sum),
-    isPositive: sum > 0 ? 1 : 0,
-    numberOfCards: hand.length,
-    positiveSum: hand.reduce((currentSum, value) => (value > 0) ? currentSum + value : currentSum, 0),
-    highestPositiveCard: hand[hand.length - 1] > 0 ? hand[hand.length - 1] : 0,
+    isSabacc: false,
+    isPureSabacc: false,
+    isFullSabacc: false,
+    isFleet: false,
+    isDualPowerCoupling: false,
+    isPowerCoupling: false,
+    isRhylet: false,
+    isStraightStaves: false,
+    isSquadron: false,
+    isStraightKhyron: false,
+    isWizard: false,
+    isBanthasWild: false,
+    isDualSabacc: false,
+    isLoneSabacc: false,
   };
-  
+
+  if (
+    !Array.isArray(cardValues) ||
+    cardValues.length < 2 ||
+    cardValues.length > 5 ||
+    isNaN(cardValues.reduce((a, b) => a + b))
+  ) {
+    score.name = cardValues.length < 2 ? `Not enough cards (${cardValues.length}).` :
+      cardValues.length > 5 ? `Too many cards (${cardValues.length}).` :
+      `Something went wrong.`
+    return score;
+  }
+
+  // const cardValues = isolateCardValues(cardValues);
+  const sum = calculateSum(cardValues);
+  const positiveSum = calculatePositiveSum(cardValues);
+  const highestIntegerValue = findHighestIntegerValue(cardValues);
+  const frequencies = calculateFrequencies(cardValues);
+  const frequenciesWide = calculateFrequenciesWide(cardValues);
+  const dyads = calculateSets(frequencies, 2);
+  const threats = calculateSets(frequencies, 3);
+  const quads = calculateSets(frequencies, 4);
+  const runs = calculateRuns(frequencies);
+
+  const vec = {
+    sum,
+    size: cardValues.length,
+    positiveSum,
+    highestIntegerValue,
+    frequencies,
+    frequenciesWide,
+    dyads,
+    threats,
+    quads,
+    runs,
+  };
+
+  criteria.isSabacc = sum === 0;
+
   if (criteria.isSabacc) {
-    const sabaccValues = hand.map(card => Math.abs(card));
-    const frequencies = sabaccValues.reduce((frequencyArray, value) => {
-      frequencyArray[value] = frequencyArray[value] + 1;
-      return frequencyArray;
-    },
-    [0,0,0,0,0,0,0,0,0,0,0]);
 
-    const findRun = () => {
-      for (let c = 3; c < frequencies.length; c++) {
-        if (frequencies[c-3] === 1 && frequencies[c-2] === 1 && frequencies[c-1] === 1 && frequencies[c] === 1) {
-          return c;
-        }
-      };
-      return false;
-    };
-
-    if (JSON.stringify(frequencies) === '[2,0,0,0,0,0,0,0,0,0,0]') {
-      score.name = `Pure Sabacc`;
-      criteria.sabaccBonus = 15;
-    } else if (JSON.stringify(frequencies) === '[1,0,0,0,0,0,0,0,0,0,4]') {
-      score.name = `Full Sabacc`;
-      criteria.sabaccBonus = 14;
-    } else if (frequencies.indexOf(4) > 0 && frequencies[0] > 0) {
-      score.name = `Fleet of ${frequencies.indexOf(4)}s`;
-      criteria.sabaccBonus = 13;
-      criteria.pairBonus = frequencies.indexOf(4);
-    } else if (frequencies.indexOf(2) > 0 && frequencies.indexOf(2, frequencies.indexOf(2) + 1) > 0 && frequencies[0] > 0) {
-      score.name = `Dual Power Coupling of ${frequencies.indexOf(2)}s & ${frequencies.indexOf(2, frequencies.indexOf(2) + 1)}s`;
-      criteria.sabaccBonus = 12;
-      criteria.pairBonus = frequencies.indexOf(2);
-      criteria.secondPairBonus = frequencies.indexOf(2, frequencies.indexOf(2) + 1);
-    } else if (frequencies.indexOf(2) > 0 && frequencies[0] > 0) {
-      score.name = `Power Coupling (Yee-Haa) of ${frequencies.indexOf(2)}s`;
-      criteria.sabaccBonus = 11;
-      criteria.pairBonus = frequencies.indexOf(2);
-      criteria.secondPairBonus = frequencies.indexOf(2, frequencies.indexOf(2) + 1);
-    } else if (frequencies.indexOf(3) > 0 && frequencies.indexOf(2, frequencies.indexOf(3) + 1) > 0) {
-      score.name = `Rhylet of ${frequencies.indexOf(3)}s & ${frequencies.indexOf(2, frequencies.indexOf(3) + 1)}s`
-      criteria.sabaccBonus = 10;
-      criteria.pairBonus = frequencies.indexOf(3);
-      criteria.secondPairBonus = frequencies.indexOf(2, frequencies.indexOf(3) + 1);
-    } else if (JSON.stringify(frequencies) === '[0,0,0,0,0,0,0,1,1,1,1]') {
-      score.name = `Straight Staves (${criteria.highestPositiveCard === 10 ? 10 : -10})`;
-      criteria.sabaccBonus = 9;
-    } else if (frequencies.indexOf(4) > 0) {
-      score.name = `Squadron of ${frequencies.indexOf(4)}s`;
-      criteria.sabaccBonus = 8;
-      criteria.pairBonus = frequencies.indexOf(4);
-    } else if (findRun()) {
-      score.name = `Straight Khyron (${findRun()})`;
-      criteria.sabaccBonus = 7;
-      criteria.runBonus = 10 - findRun();
-    } else if (JSON.stringify(frequencies) === '[0,1,1,1,1,0,0,0,0,0,1]') {
-      score.name = `Wizard (Gee Whiz) (${criteria.highestPositiveCard === 10 ? 10 : -10})`;
-      criteria.sabaccBonus = 6;
-    } else if (frequencies.indexOf(3) > 0) {
-      score.name = `Banthas Wild of ${frequencies.indexOf(3)}s`;
-      criteria.sabaccBonus = 5;
-      criteria.pairBonus = frequencies.indexOf(3);
-    } else if (frequencies.indexOf(2) >= 0 && frequencies.indexOf(2, frequencies.indexOf(2) + 1) > 0){
-      score.name = `Dual Pair Sabacc (${frequencies.indexOf(2)}s & ${frequencies.indexOf(2, frequencies.indexOf(2) + 1)}s)`;
-      criteria.sabaccBonus = 4;
-      criteria.pairBonus = frequencies.indexOf(2);
-      criteria.secondPairBonus = frequencies.indexOf(2, frequencies.indexOf(2) + 1) ? frequencies.indexOf(2, frequencies.indexOf(2) + 1) : frequencies.indexOf(2);
-    } else if (frequencies.indexOf(2) >= 0) {
-      score.name = `Lone Pair Sabacc (${frequencies.indexOf(2)}s)`;
-      criteria.sabaccBonus = 3;
-      criteria.pairBonus = frequencies.indexOf(2);
-    } else {
-      score.name = `Sabacc (${criteria.positiveSum})`;
-      criteria.sabaccBonus = 2;
-    }
-  } else if (!criteria.isSabacc) {
-    score.name = `Nulhrek (${sum})`;
-  }
-  const twoDigits = (input) => {
-    return input.toString().length === 2 ? input.toString() : '0' + input.toString()
+    criteria.isPureSabacc = isPureSabacc(vec);
+    criteria.isFullSabacc = isFullSabacc(vec);
+    criteria.isFleet = isFleet(vec);
+    criteria.isDualPowerCoupling = isDualPowerCoupling(vec);
+    criteria.isPowerCoupling = isPowerCoupling(vec);
+    criteria.isRhylet = isRhylet(vec);
+    criteria.isStraightStaves = isStraightStaves(vec);
+    criteria.isSquadron = isSquadron(vec);
+    criteria.isStraightKhyron = isStraightKhyron(vec);
+    criteria.isWizard = isWizard(vec);
+    criteria.isBanthasWild = isBanthasWild(vec);
+    criteria.isDualSabacc = isDualSabacc(vec);
+    criteria.isLoneSabacc = isLoneSabacc(vec);
   }
 
-  score.rank = 
-    twoDigits(criteria.isSabacc) +
-    twoDigits(criteria.sabaccBonus) +
-    twoDigits(criteria.pairBonus) +
-    twoDigits(criteria.secondPairBonus) +
-    twoDigits(criteria.runBonus) +
-    twoDigits(criteria.nulhrekBonus) +
-    twoDigits(criteria.isPositive) +
-    twoDigits(criteria.numberOfCards) +
-    twoDigits(criteria.positiveSum) +
-    twoDigits(criteria.highestPositiveCard);
-  
-  score.rankNew = 
-    criteria.isSabacc ? 
-    criteria.isSabacc +
-    twoDigits(criteria.sabaccBonus) +
-    twoDigits(criteria.pairBonus) +
-    twoDigits(criteria.secondPairBonus) +
-    twoDigits(criteria.runBonus) +
-    twoDigits(criteria.positiveSum) :
-    criteria.nulhrekBonus +
-    twoDigits(criteria.isPositive) +
-    twoDigits(criteria.numberOfCards) +
-    twoDigits(criteria.positiveSum) +
-    twoDigits(criteria.highestPositiveCard);
+  score.rank = 0;
 
-  score.rankInt = parseInt(score.rank);
-  score.rankNewInt = parseInt(score.rankNew);
+  if (criteria.isPureSabacc) {
+    score.name = `Pure Sabacc`;
+    return score;
+  } else {
+    score.rank = score.rank + 1;
+  }
 
+  if (criteria.isFullSabacc) {
+    score.name = `Full Sabacc`;
+    return score;
+  } else {
+    score.rank = score.rank + 1;
+  }
+
+  if (criteria.isFleet) {
+    score.name = `Fleet of ${vec.quads[0]}s`;
+    score.rank = score.rank + (vec.quads[0] / 10) + ((5 - vec.size) / 1000) + ((20 - vec.positiveSum) / 100000) + ((10 - vec.highestIntegerValue) / 10000000);
+    return score;
+  } else {
+    score.rank = score.rank + 2;
+  }
+
+  if (criteria.isDualPowerCoupling) {
+    score.name = `Dual Power Coupling of ${vec.dyads[0]}s & ${vec.dyads[1]}s`;
+    score.rank = score.rank + (vec.dyads[0] / 10) + (vec.dyads[1] / 1000) + ((5 - vec.size) / 100000) + ((20 - vec.positiveSum) / 10000000) + ((10 - vec.highestIntegerValue) / 1000000000);
+    return score;
+  } else {
+    score.rank = score.rank + 2;
+  }
+
+  if (criteria.isPowerCoupling) {
+    score.name = `Power Coupling (Yee-Haw) of ${vec.dyads[0]}s`;
+    score.rank = score.rank + (vec.dyads[0] / 10) + ((5 - vec.size) / 1000) + ((20 - vec.positiveSum) / 100000) + ((10 - vec.highestIntegerValue) / 10000000);
+    return score;
+  } else {
+    score.rank = score.rank + 2;
+  }
+
+  if (criteria.isRhylet) {
+    score.name = `Rhylet of ${vec.threats[0]}s & ${vec.dyads}s`;
+    score.rank = score.rank + (vec.threats[0] / 10) + ((5 - vec.size) / 1000) + ((20 - vec.positiveSum) / 100000) + ((10 - vec.highestIntegerValue) / 10000000);
+    return score;
+  } else {
+    score.rank = score.rank + 2;
+  }
+
+  if (criteria.isStraightStaves) {
+    const positive = vec.frequenciesWide[20] === 1;
+    score.name = `Straight Staves (${positive ? `Positive` : `Negative`})`;
+    score.rank = score.rank + (positive ? 0 : 0.5) + ((5 - vec.size) / 100);
+    return score;
+  } else {
+    score.rank = score.rank + 1;
+  }
+
+  if (criteria.isSquadron) {
+    score.name = `Squadron of ${vec.quads[0]}s`;
+    score.rank = score.rank + (vec.quads[0] / 10) + ((5 - vec.size) / 1000) + ((20 - vec.positiveSum) / 100000) + ((10 - vec.highestIntegerValue) / 10000000);
+    return score;
+  } else {
+    score.rank = score.rank + 2;
+  }
+
+  if (criteria.isStraightKhyron) {
+    const run = vec.runs.indexOf(4) > 0 ? vec.runs.indexOf(4) : vec.runs.indexOf(5);
+    score.name = `Straight Khyron of ${run}s`;
+    score.rank = score.rank + (run / 10) + ((5 - vec.size) / 1000) + ((20 - vec.positiveSum) / 100000) + ((10 - vec.highestIntegerValue) / 10000000);
+    return score;
+  } else {
+    score.rank = score.rank + 2;
+  }
+
+  if (criteria.isWizard) {
+    const positive = vec.frequenciesWide[20] === 1;
+    score.name = `Wizard (Gee-Whiz) (${positive ? `Positive` : `Negative`})`;
+    score.rank = score.rank + (positive ? 0 : 0.5);
+    return score;
+  } else {
+    score.rank = score.rank + 1;
+  }
+
+  if (criteria.isBanthasWild) {
+    score.name = `Banthas Wild of ${vec.threats[0]}s`;
+    score.rank = score.rank + (vec.threats[0] / 10) + ((5 - vec.size) / 1000) + ((10 - vec.highestIntegerValue) / 100000);
+    return score;
+  } else {
+    score.rank = score.rank + 2;
+  }
+
+  if (criteria.isDualSabacc) {
+    score.name = `Dual Sabacc (Rule of Two) of ${vec.dyads[0]}s & ${vec.dyads[1]}s`;
+    score.rank = score.rank + (vec.dyads[0] / 10) + (vec.dyads[1] / 1000) + ((5 - vec.size) / 100000) + ((20 - vec.positiveSum) / 10000000) + ((10 - vec.highestIntegerValue) / 1000000000);
+    return score;
+  } else {
+    score.rank = score.rank + 2;
+  }
+
+  if (criteria.isLoneSabacc) {
+    score.name = `Lone Sabacc (Sabacc) of ${vec.dyads[0]}s`;
+    score.rank = score.rank + (vec.dyads[0] / 10) + ((5 - vec.size) / 1000) + ((20 - vec.positiveSum) / 100000) + ((10 - vec.highestIntegerValue) / 10000000);
+    return score;
+  } else {
+    score.rank = score.rank + 2;
+  }
+
+  // Unnamed Sabacc Hands
+  if (criteria.isSabacc) {
+    score.name = `Sabacc (${vec.positiveSum})`;
+    score.rank = score.rank + (5 - vec.size) + ((20 - vec.positiveSum) / 100) + ((10 - vec.highestIntegerValue) / 10000);
+    return score;
+  } else {
+    score.rank = score.rank + 4;
+  }
+
+  // Nulrhek Hands
+  score.name = `Nulrhek (${vec.sum})`;
+  score.rank = score.rank + Math.abs(vec.sum) + ((vec.sum > 0 ? 0 : 1) / 10) + ((5 - vec.size) / 100) + ((48 - vec.positiveSum) / 10000) + ((10 - vec.highestIntegerValue) / 1000000);
   return score;
+};
+
+// const isolateCardValues = (hand) => {
+//   const unsortedValues = hand.map((card) => card.value);
+//   return unsortedValues;
+// };
+
+const calculateSum = (cardValues) => {
+  const sum = cardValues.reduce(
+    (currentSum, currentValue) => currentSum + currentValue
+  );
+  return sum;
+};
+
+const calculatePositiveSum = (cardValues) => {
+  const sum = cardValues.reduce(
+    (currentSum, currentValue) => {
+      if (currentValue > 0) {
+        return currentSum + currentValue;
+      }
+      return currentSum;
+    }
+  );
+  return sum;
+};
+
+const findHighestIntegerValue = (cardValues) => {
+  const highestIntegerValue = Math.max(...cardValues);
+  return highestIntegerValue;
+}
+
+const calculateFrequencies = (cardValues) => {
+  const cardValuesAbsolute = cardValues.map((value) => Math.abs(value));
+  const frequencies = cardValuesAbsolute.reduce(
+    (frequenciesArray, value) => {
+      frequenciesArray[value] = frequenciesArray[value] + 1;
+      return frequenciesArray;
+    },
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  );
+  return frequencies;
+};
+
+const calculateFrequenciesWide = (cardValues) => {
+  const frequencies = cardValues.reduce(
+    (frequenciesArray, value) => {
+      frequenciesArray[value + 10] = frequenciesArray[value + 10] + 1;
+      return frequenciesArray;
+    },
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  );
+  return frequencies;
+};
+
+const calculateSets = (frequencies, setSize = 2) => {
+  const sets = frequencies.reduce(
+    (setsArray, frequency, value) => {
+      if (frequency === setSize) {
+        setsArray.push(value);
+        return setsArray;
+      }
+      return setsArray;
+    }, []
+  );
+  return sets;
+};
+
+const calculateRuns = (frequencies) => {
+  const runs = frequencies.reduce(
+    (runsArray, _frequency, value, frequenciesArray) => {
+      if (
+        frequenciesArray[value] &&
+        !runsArray[value] &&
+        !runsArray[value + 1] &&
+        !runsArray[value + 2] &&
+        !runsArray[value + 3] &&
+        !runsArray[value + 4]
+      ) {
+        if (
+          value < 10 &&
+          frequenciesArray[value + 1] &&
+          !runsArray[value + 1] &&
+          !runsArray[value + 2] &&
+          !runsArray[value + 3] &&
+          !runsArray[value + 4]
+        ) {
+          if (
+            value < 9 &&
+            frequenciesArray[value + 2] &&
+            !runsArray[value + 2] &&
+            !runsArray[value + 3] &&
+            !runsArray[value + 4]
+          ) {
+            if (
+              value < 8 &&
+              frequenciesArray[value + 3] &&
+              !runsArray[value + 3] &&
+              !runsArray[value + 4]
+            ) {
+              if (value < 7 && frequenciesArray[value + 4]) {
+                runsArray[value + 4] = 5;
+                return runsArray;
+              }
+              runsArray[value + 3] = 4;
+              return runsArray;
+            }
+            runsArray[value + 2] = 3;
+            return runsArray;
+          }
+          runsArray[value + 1] = 2;
+          return runsArray;
+        }
+        runsArray[value] = 1;
+        return runsArray;
+      }
+      return runsArray;
+    },
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  );
+  return runs;
+};
+
+const isPureSabacc = (vec) => {
+  return JSON.stringify(vec.frequencies) === JSON.stringify([2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+};
+
+const isFullSabacc = (vec) => {
+  return JSON.stringify(vec.frequencies) === JSON.stringify([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]);
+};
+
+const isFleet = (vec) => {
+  return vec.frequencies[0] === 1 && vec.quads.length;
+};
+
+const isDualPowerCoupling = (vec) => {
+  return vec.frequencies[0] === 1 && vec.dyads.length === 2;
+};
+
+const isPowerCoupling = (vec) => {
+  return vec.frequencies[0] > 0 && vec.dyads.length === 1;
+};
+
+const isRhylet = (vec) => {
+  return vec.dyads.length && vec.threats.length && vec.frequenciesWide.indexOf(3);
+};
+
+const isStraightStaves = (vec) => {
+  return JSON.stringify(vec.frequencies) === JSON.stringify([0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1]) || JSON.stringify(vec.frequencies) === JSON.stringify([1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1]);
+};
+
+const isSquadron = (vec) => {
+  return !vec.frequencies[0] && vec.quads.length;
+};
+
+const isStraightKhyron = (vec) => {
+  return (vec.runs.indexOf(4) > 0 && vec.runs.indexOf(1) <= 0) || vec.runs.indexOf(5) > 0;
+};
+
+const isWizard = (vec) => {
+  return vec.runs.indexOf(4) === 4 && vec.frequencies[10];
+};
+
+const isBanthasWild = (vec) => {
+  return vec.threats.length > 0;
+};
+
+const isDualSabacc = (vec) => {
+  return vec.dyads.length === 2;
+};
+
+const isLoneSabacc = (vec) => {
+  return vec.dyads.length === 1;
 };
