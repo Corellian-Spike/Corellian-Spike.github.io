@@ -19,6 +19,8 @@
         ScoreBot
       </h1>
       <table>
+        Enter your cards using the inputs below.<br>
+        <br>
         <tr>
           <td class="min">
             Evaluation:
@@ -32,7 +34,7 @@
             Score:
           </td>
           <td id="rank-line" class="max">
-            0
+            ---
           </td>
         </tr>
       </table>
@@ -52,6 +54,10 @@
       <input type="number" name="control-4" id="control-4" min="-10" max="10" onchange="onControlChange('control-4', 'hand-4')">
       <input type="submit" value="Calculate Score" id="calculate-button" onclick="onControlSubmit()">
       <input type="submit" value="X" id="clear-button" onclick="onControlClear()">
+      <br>
+      <br>
+      Lower scores beat higher, with the best score being 0.<br>
+      Scoring is based on <a target="_blank" href="./resources/rules/Correlian Spike Sabacc (v3.0).pdf">these instructions</a>.<br>
     </div>
     <script src="src/helpers.js"></script>
     <script src="src/main-narrow.js"></script>

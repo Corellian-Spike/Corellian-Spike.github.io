@@ -37,6 +37,9 @@ const onControlClear = () => {
   updateImage('hand-2', 'back', 'card-reg optional');
   updateImage('hand-3', 'back', 'card-reg optional');
   updateImage('hand-4', 'back', 'card-reg optional');
+
+  document.getElementById('name-line').innerHTML = `---`;
+  document.getElementById('rank-line').innerHTML = `---`;
 }
 
 displayScore = (score) => {
